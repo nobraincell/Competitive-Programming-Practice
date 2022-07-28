@@ -1,13 +1,16 @@
+#include <bits/stdc++.h>
+using namespace std;
+
 template <typename T>
 struct SegTree {
     int n;
     vector<T> tree;
 
     T combine(T a, T b) {
-        return a + b;
+        return a ^ b;
     }
 
-    void build(T* a, int size) {
+    void init(T* a, int size) {
         n = size;
         tree = vector<T>(4 * size);
         build(a, 1, 0, n - 1);
@@ -59,3 +62,28 @@ struct SegTree {
     }
 };
 
+
+int main() {
+    ios::sync_with_stdio(0);
+    
+    int n, q;
+    cin >> n >> q;
+
+    long long a[n];
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    SegTree<long long> st;
+    st.init(a, n);
+
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+
+        l--, r--;
+        cout << st.query(l, r) << "\n";
+    }
+
+    return 0;
+}

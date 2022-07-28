@@ -1,36 +1,67 @@
 #include <bits/stdc++.h>
 using namespace std;
-#define MAXN 400010
-long long sum[MAXN];
-long long a[MAXN];
 
-void build(int n) {
-    int ptr = n;
-    while (ptr > 0) {
-        sum[ptr] = sum[ptr*2] + sum[ptr*2+1];
-        ptr -= 1;
-    }
-}
+template <typename T>
+struct SegTree {
+    int n;
+    vector<T> tree;
 
-long long rangeSum(int n, int l, int r) {
-    l += n, r += n;
-    long long sm = 0;
-    while (l <= r) {
-        if (l % 2 == 1) sm += sum[l++];
-        if (r % 2 == 0) sm += sum[r--];
-        l /= 2, r /= 2;
-    }
-    return sm;
-}
-
-void update(int n, int idx, int val) {
-    a[idx] = sum[idx + n] = val;
-    int ptr = idx+n;
-    for (ptr = ptr / 2; ptr > 0; ptr /= 2) {
-        sum[ptr] = sum[ptr*2] + sum[ptr*2+1];
+    T combine(T a, T b) {
+        return a + b;
     }
 
-}
+    void init(T* a, int size) {
+        n = size;
+        tree = vector<T>(4 * size);
+        build(a, 1, 0, n - 1);
+    }
+
+    void build(T* a, int v, int tl, int tr) {
+        if (tl == tr) {
+            tree[v] = a[tl];
+        } 
+        else {
+            int tm = (tl + tr) / 2;
+            build(a, v*2, tl, tm);
+            build(a, v*2+1, tm+1, tr);
+            tree[v] = combine(tree[v*2], tree[v*2+1]);
+        }
+    }
+
+    T query(int l, int r) {
+        return query(1, 0, n-1, l, r);
+    }
+
+    T query(int v, int tl, int tr, int l, int r) {
+        if (l > r) 
+            return 0;
+        if (l == tl && r == tr) {
+            return tree[v];
+        }
+        int tm = (tl + tr) / 2;
+        T a = query(v*2, tl, tm, l, min(r, tm)),
+          b = query(v*2+1, tm+1, tr, max(l, tm+1), r);
+        return combine(a, b);
+    }
+
+    void update(int pos, T new_val) {
+        update(1, 0, n-1, pos, new_val);
+    }
+
+    void update(int v, int tl, int tr, int pos, T new_val) {
+        if (tl == tr) {
+            tree[v] = new_val;
+        } else {
+            int tm = (tl + tr) / 2;
+            if (pos <= tm)
+                update(v*2, tl, tm, pos, new_val);
+            else
+                update(v*2+1, tm+1, tr, pos, new_val);
+            tree[v] = combine(tree[v*2], tree[v*2+1]);
+        }
+    }
+};
+
 
 int main() {
     ios::sync_with_stdio(0);
@@ -38,12 +69,13 @@ int main() {
     int n, q;
     cin >> n >> q;
 
-    for (int i = 1; i <= n; ++i) {
+    long long a[n];
+    for (int i = 0; i < n; ++i) {
         cin >> a[i];
-        sum[i+n] = a[i];
     }
 
-    build(n);
+    SegTree<long long> st;
+    st.init(a, n);
 
     while (q--) {
         int type;
@@ -52,12 +84,16 @@ int main() {
         if (type == 1) {
             int k, u;
             cin >> k >> u;
-            update(n, k, u);
+
+            st.update(k-1, u);
         }
-        else {
-            int a, b;
-            cin >> a >> b;
-            cout << rangeSum(n, a, b) << "\n";
+        else if (type == 2) {
+            int l, r;
+            cin >> l >> r;
+
+            l--, r--;
+
+            cout << st.query(l, r) << "\n";
         }
     }
 
